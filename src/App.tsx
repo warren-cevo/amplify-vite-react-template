@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 /** @jsxImportSource react */
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import {Input, TextField, useAuthenticator} from '@aws-amplify/ui-react';
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
 
 const client = generateClient<Schema>();
 
 function App() {
+  const [todo, setTodo] = useState<string>("");
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
   const { signOut } = useAuthenticator();
 
@@ -17,7 +18,8 @@ function App() {
   }, []);
 
   function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
+    client.models.Todo.create({ content: todo });
+    setTodo("");
   }
 
   function deleteTodo(id: string) {
@@ -27,23 +29,41 @@ function App() {
   return (
     <main>
       <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li
-              onClick={() => deleteTodo(todo.id)}
-              key={todo.id}
-          >
-              {todo.content}
-          </li>
-        ))}
-      </ul>
+      <TextField
+        isRequired
+        placeholder="What are you going to do today?"
+        id="todo"
+        name="todo"
+        onChange={(e) => {
+          setTodo(e.currentTarget.value);
+        }}
+        value={todo}
+        variation="quiet"
+        onKeyUp={(e) => {
+            if (e.key === "Enter") {
+                createTodo()
+                setTodo("");
+            }
+        }}
+        data-testid="todo-input"
+        style={{border: "1px solid black", borderRadius: "8px", marginBottom: "4px", backgroundColor: "white"}}
+      />
+      <button onClick={createTodo}>Add</button>
+      {todos.length == 0
+          ? <p><i>Add your todos</i></p>
+          : <ul data-testid="todos-count">
+              {todos.map((todo, i) => (
+                  <li
+                      onClick={() => deleteTodo(todo.id)}
+                      data-testid={`todo-${i}`}
+                      key={todo.id}
+                  >
+                      {i+1}) {todo.content}
+                  </li>
+              ))}
+          </ul>}
       <div>
         🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
       </div>
       <button onClick={signOut}>Sign out</button>
     </main>
